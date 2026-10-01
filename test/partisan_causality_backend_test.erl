@@ -11,6 +11,7 @@ received_order_buffer_is_forwarded_to_later_send_test() ->
     Destination = 'destination@host',
     Sender = 'sender@host',
     Label = causality_backend_order_buffer_test,
+    OldName = partisan_config:get(name, undefined),
     ok = partisan_config:set(name, Local),
     {ok, Pid} = partisan_causality_backend:start_link(Label),
     try
@@ -37,5 +38,6 @@ received_order_buffer_is_forwarded_to_later_send_test() ->
             ForwardedOrderBuffer
         )
     after
-        gen_server:stop(Pid)
+        gen_server:stop(Pid),
+        ok = partisan_config:set(name, OldName)
     end.

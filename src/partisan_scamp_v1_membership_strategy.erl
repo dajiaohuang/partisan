@@ -341,22 +341,27 @@ random_0_or_1() ->
 remove_subscription_test() ->
     Local = 'local@localhost',
     Remote = 'remote@localhost',
-    ok = partisan_config:set(name, Local),
-    Membership = sets:from_list([Local, Remote], [{version, 2}]),
-    State0 = #scamp_v1{
-        actor = Local,
-        membership = Membership,
-        last_message_time = undefined
-    },
+    OldName = partisan_config:get(name, undefined),
+    try
+        ok = partisan_config:set(name, Local),
+        Membership = sets:from_list([Local, Remote], [{version, 2}]),
+        State0 = #scamp_v1{
+            actor = Local,
+            membership = Membership,
+            last_message_time = undefined
+        },
 
-    {ok, Members, OutgoingMessages, State} = handle_message(
-        {remove_subscription, Remote}, State0
-    ),
+        {ok, Members, OutgoingMessages, State} = handle_message(
+            {remove_subscription, Remote}, State0
+        ),
 
-    ?assertEqual([Local], Members),
-    ?assertEqual([Local], members(State)),
-    ?assertEqual(
-        [{Local, {membership_strategy, {remove_subscription, Remote}}}],
-        OutgoingMessages
-    ).
+        ?assertEqual([Local], Members),
+        ?assertEqual([Local], members(State)),
+        ?assertEqual(
+            [{Local, {membership_strategy, {remove_subscription, Remote}}}],
+            OutgoingMessages
+        )
+    after
+        ok = partisan_config:set(name, OldName)
+    end.
 -endif.
